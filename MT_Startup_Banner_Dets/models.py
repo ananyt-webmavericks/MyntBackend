@@ -1,0 +1,21 @@
+from django.db import models
+
+# Create your models here.
+class BannerModel(models.Model):
+    MTUSER_ID = models.ForeignKey(to='self', on_delete=models.CASCADE)
+    EMAIL=models.CharField(max_length=250)
+    MODULE=models.CharField(max_length=50)
+    BANNER_SNO=models.CharField(max_length=150)
+    BANNER_IMAGE=models.BinaryField
+    BANNER_VIDEO=models.BigAutoField
+    STATUS=models.CharField(max_length=50)
+    COMMENTS=models.CharField(max_length=250)
+    DESCRIPTION=models.CharField(max_length=250)
+    CREATED_USER=models.CharField(max_length=150)
+    CREATED_DATE=models.DateField()
+    MODIFIED_USER=models.CharField(max_length=150)
+    MODIFIED_DATE=models.DateField()
+   
+    
+    def __str__(self):
+        return self.title

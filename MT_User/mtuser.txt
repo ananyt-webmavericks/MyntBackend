@@ -1,0 +1,16 @@
+Methods	Urls	Actions
+POST	/api/signup	create new user details
+GET	/api/signup	retrieve all user details
+GET	/api/signup/:id	retrieve a user details by :id
+PUT	/api/signup/:id	update a user details by :id
+DELETE	/api/signup/:id	delete a Tutoruser detailsial by :id
+DELETE	/api/signup	delete all user details
+GET	/api/signup?firstname=[keyword]	
+find all user details which title contains keyword
+
+
+
+
+http://127.0.0.1:8000/api/mt_user?FIRSTNAME=thulasy ===>Search by username
+http://127.0.0.1:8000/api/mt_user===> add new username
+http://127.0.0.1:8000/api/mt_user/1 ====> edit and delete by id
