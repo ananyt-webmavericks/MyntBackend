@@ -9,6 +9,8 @@ from rest_framework.reverse import reverse
 from MT_Investor_Kyc.models import KycModel
 from MT_Investor_Kyc.serializers import KycSerializer
 from rest_framework.decorators import api_view
+import http.client
+import json
  
 
 
@@ -75,3 +77,100 @@ def  kyc_detail(request, pk):
         print("7")
         kycinfo.delete()
         return JsonResponse({'message': ' kycinfo was deleted successfully!'}, status=status.HTTP_204_NO_CONTENT)
+
+
+@api_view(["POST"])
+def verify_pan(request):
+    try:
+        kycinfo_data = JSONParser().parse(request)
+        pan_card = kycinfo_data["pan_card"]
+        signzy_creds = login_signzy()
+        auth_token = signzy_creds["id"]
+        user_id = signzy_creds["userId"]
+        pan_data = signzy_verify_pan(pan_card,auth_token,user_id)
+        key = "result"
+        if key in pan_data.keys():
+            return JsonResponse({"message":"PAN verification done successfully!"} , status= status.HTTP_200_OK)
+        else:
+            return JsonResponse({"message":"PAN verification can't be done" , "data":pan_data}, status=status.HTTP_406_NOT_ACCEPTABLE )
+    except Exception as e:
+        raise e
+
+def login_signzy():
+    try:
+        conn = http.client.HTTPSConnection("preproduction.signzy.tech")
+        payload = json.dumps({
+            "username": "Meteor_Test",
+            "password": "TvWwex3eN2W1rV2WXa9u"
+        })
+        headers = {
+            'Content-Type': 'application/json'
+            }
+        conn.request("POST", "/api/v2/patrons/login", payload, headers)
+        res = conn.getresponse()
+        data = json.loads(res.read().decode('utf-8'))
+        return data
+    except Exception as e:
+        raise e
+
+def signzy_verify_pan(pan_card,auth_token,user_id):
+    try:
+        conn = http.client.HTTPSConnection("preproduction.signzy.tech")
+        payload = json.dumps({
+            "task": "fetch",
+            "essentials": {
+                "number": pan_card
+            }
+        })
+        headers = {
+            'Authorization': ""+auth_token+"",
+            'Content-Type': 'application/json'
+        }
+        conn.request("POST", "/api/v2/patrons/"+user_id+"/panv2", payload, headers)
+        res = conn.getresponse()
+        data = json.loads(res.read().decode('utf-8'))
+        return data
+    except Exception as e:
+        raise e
+        
+@api_view(["POST"])
+def verify_bank(request):
+    try:
+        kycinfo_data = JSONParser().parse(request)
+        signzy_creds = login_signzy()
+        auth_token = signzy_creds["id"]
+        user_id = signzy_creds["userId"]
+        bank_verification = verify_bank_details(kycinfo_data,auth_token,user_id)
+        result = bank_verification["result"]
+        if result["active"] == "yes":
+            return JsonResponse({"message":"Bank Account Details Verified Successfully!!"} , status= status.HTTP_200_OK)
+        else:
+            return JsonResponse({"message":"Bank Account Details can't be Verified!!" , "data":result}, status=status.HTTP_406_NOT_ACCEPTABLE )
+
+    except Exception as e:
+        raise e
+
+def verify_bank_details(account_info,auth_token,user_id):
+    try:
+
+        conn = http.client.HTTPSConnection("preproduction.signzy.tech")
+        payload = json.dumps({
+            "task": "bankTransfer",
+            "essentials": {
+                "beneficiaryAccount": account_info["account_number"],
+                "beneficiaryIFSC": account_info["ifsc_code"],
+                "beneficiaryName":account_info["name"],
+                "nameFuzzy": "true"
+            }
+        })
+        headers = {
+            'Authorization': ""+auth_token+"",
+            'Content-Type': 'application/json'
+        }
+        conn.request("POST", "/api/v2/patrons/"+user_id+"/bankaccountverifications", payload, headers)
+        res = conn.getresponse()
+        data = json.loads(res.read().decode('utf-8'))
+        return data
+
+    except Exception as e:
+        raise e
